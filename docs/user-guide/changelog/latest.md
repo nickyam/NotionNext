@@ -1,6 +1,127 @@
 # 最新版本与更新日志
 
-> 当前主线：**4.10.5**（见根目录 `package.json`）
+> 当前主线：**4.10.8**（见根目录 `package.json`）
+
+## 4.10.8 发布要点
+
+本版本新增 Cloudflare Worker 版 Notion 图片反代示例，并补充完整站长教程。站长可以把 Notion 素材统一映射到自己的 CDN 域名，例如 `https://cdn.example.com`，让 `www.notion.so/image/...` 和 Notion 内置封面图经过自己的 Cloudflare 缓存。
+
+### Notion 图片反代
+
+- 新增 `cloudflare/notion-image-proxy` 最小 Worker 工程，默认只放行 `/image/` 和 `/images/`。
+- Worker 支持 Notion 签名图片跳转链路，并使用 `caches.default` 显式缓存响应，重复访问同一图片可观察到 `X-Notion-Image-Proxy-Cache: HIT`。
+- 示例配置使用 Cloudflare Custom Domain，生产示例域名为 `cdn.tangly1024.com`。
+- 保持 NotionNext 侧接入方式不变：只需配置 `NEXT_PUBLIC_NOTION_HOST=https://你的CDN域名`。
+
+### 文档
+
+- 新增 Notion 图片反代教程，覆盖 Worker 部署、API Token 权限、Custom Domain 限制、本地预览、`yarn start` / `yarn export` 兼容性和缓存验证方式。
+- 记录常见坑：`Write all resources` 仍缺 `User -> Memberships -> Read`、Custom Domain 不能带路径、浏览器内存缓存会显示旧的 `CF-Cache-Status: MISS`、`prod-files-secure` 不能直接请求 S3 原始地址。
+- VitePress 部署目录新增「Notion 图片反代」入口。
+- 新增原创存证教程，说明 `NEXT_PUBLIC_ORIGINALITY_PROOF_ENABLE`、Notion `proof` / `proofTime` / `proofHash` / `proofUrl` 字段，以及本地内容哈希的证明边界。
+- 原创存证展示改为紧凑徽章，可展开查看详情并一键复制证据文本。
+- 原创存证新增可选 GitHub 自动公开清单模式，构建时可生成 `public/proofs/originality.json`，用于公开保存文章哈希证据。
+- 原创存证教程补充自动清单 JSON 示例、字段说明和 workflow 常见问题排查。
+
+### 升级说明
+
+- 该能力是可选增强，不影响默认 `https://www.notion.so` 图片加载。
+- 动态部署和静态导出都可使用；静态站点只要重新构建，让 HTML 输出新的 `NEXT_PUBLIC_NOTION_HOST` 即可。
+- 图片请求量大的站点建议使用 Workers Paid，因为每张图片请求都会计入 Worker request。
+
+### 验证
+
+- `node --check cloudflare/notion-image-proxy/worker.mjs`：通过。
+- `curl -I` 连续请求真实 Notion 图片：第二次返回 `CF-Cache-Status: HIT` 与 `X-Notion-Image-Proxy-Cache: HIT`。
+- `git diff --check`：通过，仅保留 Windows 工作区 LF/CRLF 提示。
+
+## 2026-08-05 自动部署流程事故记录
+
+::: warning 事件说明
+部分使用 GitHub fork + Vercel 自动部署的站点，曾收到 `Upstream Sync` 或 `chore(release): bump package.json ... [skip-version]` 构建失败邮件；个别站点可能因此出现生产部署异常。
+:::
+
+### 影响范围
+
+- 仅影响仍保留旧版自动同步或自动版本 bump 工作流的 fork 站点。
+- 手动同步、未连接 Vercel Git 部署，或使用其他部署方式的站点不在此次自动触发范围内。
+- 本次事件不涉及 Notion 数据丢失；问题发生在代码同步和部署触发链路。
+
+### 原因分析
+
+1. 旧版 `Upstream Sync` 使用定时任务，将上游 `main` 的提交自动合并到站长的 fork。
+2. 旧版版本 bump 工作流在 `main` 更新后自动修改 `package.json`，即使只改变版本号，也会产生新的 Git 提交。
+3. Vercel 对 fork 的 `main` 提交自动创建部署，因此版本号提交也会触发完整生产构建。
+4. 提交信息中的 `[skip-version]` 只能阻止 GitHub Actions 自身重复 bump，不能让 Vercel 跳过构建。旧站点的构建失败后，可能出现错误部署记录或生产指向异常。
+
+### 修复措施
+
+- 关闭 `Upstream Sync` 默认定时任务，改为站长按需手动同步。
+- 关闭版本 bump 工作流的 `push` 触发，仅保留手动执行。
+- 在 `vercel.json` 中加入 `ignoreCommand`，让 Vercel 自动跳过带 `[skip-version]` 的版本号提交。
+- 在升级教程中补充旧自动流程的恢复步骤和按需开启方法。
+
+相关修复已合并到主线：
+
+- [`0ca93d86`](https://github.com/notionnext-org/NotionNext/commit/0ca93d86946a97f9f1bc292e0468cda278e0a59b)
+
+### 站长如何处理
+
+如果站点已经出现失败部署：
+
+1. 在 Vercel 的 `Deployments` 中找到最近一条绿色 `Ready` 的 `Production` 部署，使用 `Promote to Production` 或 `Redeploy` 恢复线上版本。
+2. 将 fork 同步到最新的 NotionNext `main`，使新的工作流和 `vercel.json` 进入自己的仓库。
+3. 后续无需重新开启旧的定时任务；需要更新时使用 GitHub 的 `Sync fork` 或手动合并上游代码。
+
+上游仓库无法直接修改每个站长账号下的 Vercel 项目，也无法替旧 fork 远程执行同步。因此，历史旧 fork 至少需要完成一次同步，才能获得本次保护规则。
+
+::: tip 当前状态
+主线修复已发布，主线 CI 工作流、CodeQL、文档部署和关联 Vercel Production 部署均已验证通过。后续版本发布不再通过自动版本号提交触发所有 fork 的生产重建。
+:::
+
+### 2026-08-05 Notion API 403 后续修复
+
+部分站点在同步最新代码后，Vercel 构建仍可能出现：
+
+```text
+[POST] https://www.notion.so/api/v3/loadPageChunk: 403 Forbidden
+```
+
+经与 [react-notion-x issue #710](https://github.com/NotionX/react-notion-x/issues/710) 对照确认，原因是 Notion 前置 Cloudflare 开始拦截 Node.js 请求中缺少 `User-Agent` 的非官方 API 请求。该问题不是站长的页面权限或 `NOTION_PAGE_ID` 配置突然失效。
+
+修复内容：
+
+- 在 `notion-client` 的全局 `ofetchOptions` 中补充 `NotionNext` 的 `User-Agent`。
+- 保留 Notion 请求失败时的空数据兜底，避免 403 进一步导致页面静态序列化失败。
+
+验证结果：同一接口请求不带 UA 返回 `403`，带 `NotionNext` UA 返回 `400`（空请求参数错误），证明 Cloudflare 拦截已解除。
+
+站长处理方式：将 fork 同步到最新 `main` 后重新部署即可；无需修改 Node 版本，也无需反复修改页面权限。若仍出现 403，请先确认部署使用的是包含该修复的提交，并检查是否配置了自定义 `API_BASE_URL` 代理。
+
+## 4.10.7 发布要点
+
+本版本将主题颜色定制从 Tailwind 类名覆盖，过渡到主题语义色变量与调色板方案。早期使用 TailwindCSS 是为了快速开发；现在主题框架已经成熟，后续更适合通过 `*_COLOR_*` 配置项表达主色、背景、文字、边框等语义色，便于用户在 Notion Config 中快速调色，也避免 `.bg-indigo-600` 这类工具类被覆盖后产生语义混淆。
+
+### 主题调色板
+
+- 全局主题工具新增当前主题调色板，展示每个主题可覆盖的色号变量、CSS 变量名、默认色值和复制入口。
+- 25 个内置主题均已在 `conf/themeSwitch.manifest.js` 声明 palette；切换主题后即可查看该主题的可配置色号。
+- Fuwari 保留原有色相模型，调色板显示 `FUWARI_THEME_COLOR_HUE`，复制值为数字色相，避免破坏现有配置。
+- Endspace、Heo、Claude 等多色主题提供更完整的背景、文字、强调色、边框等变量；Fuwari、Hexo、Medium 等单主色主题保持轻量色板。
+
+### 配置与兼容
+
+- 新增或整理各主题的 `*_COLOR_*` 配置项，用户可在 Notion Config 表、环境变量或主题 `config.js` 中覆盖。
+- 保留既有 TailwindCSS 与旧配置的渲染路径，不要求用户立即迁移；推荐新调色优先使用主题色变量。
+- 补充主题迁移指南与主题色 token roadmap，后续新增主题必须首版声明 `*_COLOR_*` 与 manifest 调色板。
+- 各主题文档补充调色说明，说明如何从全局主题工具复制配置项并在 Notion Config 中覆盖。
+
+### 验证
+
+- Babel parser 定向解析：通过。
+- `npx eslint` 定向检查主题色相关文件：通过。
+- manifest smoke check：25 个内置主题 palette 覆盖率 100%。
+- `git diff --check`：通过，仅保留 Windows 工作区 LF/CRLF 提示。
 
 ## 4.10.5 发布要点
 
