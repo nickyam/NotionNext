@@ -109,11 +109,11 @@ const LayoutBase = props => {
           show={!onLoading}
           appear={true}
           enter='transition ease-in-out duration-700 transform order-first'
-          enterFrom='opacity-0 -translate-y-16'
+          enterFrom='-translate-y-16'
           enterTo='opacity-100'
           leave='transition ease-in-out duration-300 transform'
           leaveFrom='opacity-100'
-          leaveTo='opacity-0 translate-y-16'
+          leaveTo='translate-y-16'
           unmount={false}>
           {headerSlot}
         </Transition>
@@ -139,11 +139,11 @@ const LayoutBase = props => {
                   show={isArticleSlugPage ? true : !onLoading}
                   appear={true}
                   enter='transition ease-in-out duration-700 transform order-first'
-                  enterFrom='opacity-0 translate-y-16'
+                  enterFrom='translate-y-16'
                   enterTo='opacity-100'
                   leave='transition ease-in-out duration-300 transform'
                   leaveFrom='opacity-100 translate-y-0'
-                  leaveTo='opacity-0 -translate-y-16'
+                  leaveTo='-translate-y-16'
                   unmount={false}>
                   {/* 主区上部嵌入 */}
                   {slotTop}
