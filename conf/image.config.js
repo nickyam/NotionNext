@@ -13,6 +13,9 @@ module.exports = {
   RANDOM_IMAGE_REPLACE_TEXT:
     process.env.NEXT_PUBLIC_RANDOM_IMAGE_NOT_REPLACE_TEXT ||
     'images.unsplash.com', // 触发替换图片的 url 关键字(多个支持用英文逗号分开)，只有图片地址中包含此关键字才会替换为上方随机图片url
+  SELF_IMAGE_HOSTS:
+    process.env.NEXT_PUBLIC_SELF_IMAGE_HOSTS ||
+    'yun.nickyam.com,img.nickyam.com', // 自家图床域名(多个用英文逗号分开)：这些域名下的图片是固定地址，构建时不追加 t=${block.id} 防缓存参数，避免同一张图被 CDN 缓存成多份
 
   // 网站图片
   IMG_LAZY_LOAD_PLACEHOLDER:
