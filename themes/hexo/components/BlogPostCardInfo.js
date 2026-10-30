@@ -26,6 +26,7 @@ export const BlogPostCardInfo = ({
             {/* 标题 */}
             <SmartLink
               href={post?.href}
+              newTab
               passHref
               className={`line-clamp-2 replace cursor-pointer text-2xl ${
                 showPreview ? 'text-center' : ''

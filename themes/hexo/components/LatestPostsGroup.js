@@ -38,6 +38,7 @@ const LatestPostsGroup = ({ latestPosts, siteInfo }) => {
             key={post.id}
             title={post.title}
             href={post?.href}
+            newTab
             passHref
             className={'my-3 flex'}>
             <div className='w-20 h-14 overflow-hidden relative'>

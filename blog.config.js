@@ -19,6 +19,15 @@ const BLOG = {
   AUTHOR: process.env.NEXT_PUBLIC_AUTHOR || 'NotionNext', // 您的昵称 例如 tangly1024
   BIO: process.env.NEXT_PUBLIC_BIO || '一个普通的干饭人🍚', // 作者简介
   LINK: process.env.NEXT_PUBLIC_LINK || 'https://tangly1024.com', // 网站地址
+
+  // 站内【文章】链接是否在新窗口打开（首页/归档/标签页的文章卡片、上一篇下一篇、相关文章推荐、
+  // 搜索结果、最新文章等）。默认开启：看完关掉即可回到列表，不丢滚动位置。
+  // 导航菜单、标签云、分类、归档月份、分页、独立页面（如 /about）不受影响，仍在当前窗口打开。
+  // 实现：由文章类组件给 SmartLink 传 newTab 显式标记，不做 URL 猜测
+  //（文章路由是 /[prefix]/[slug] 动态路由、前缀由 Notion 侧决定，靠路径判断会误伤自定义页面）。
+  // 注：正文里的外链由 react-notion-x 自行渲染为 target="_blank"，与此配置无关。
+  LINK_POST_NEW_TAB: process.env.NEXT_PUBLIC_LINK_POST_NEW_TAB || true,
+
   KEYWORDS: process.env.NEXT_PUBLIC_KEYWORD || 'Notion, 博客', // 网站关键词 英文逗号隔开
   BLOG_FAVICON: process.env.NEXT_PUBLIC_FAVICON || '/favicon.ico', // blog favicon 配置, 默认使用 /public/favicon.ico，支持在线图片，如 https://img.imesong.com/favicon.png
   PWA_ENABLE: process.env.NEXT_PUBLIC_PWA_ENABLE || false, // 是否启用 PWA 安装入口；也可在 Notion_Config 中配置 PWA_ENABLE=true

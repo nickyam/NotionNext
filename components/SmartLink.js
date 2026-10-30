@@ -31,7 +31,21 @@ const filterLinkProps = props => {
   return rest
 }
 
-const SmartLink = ({ href, children, ...rest }) => {
+// 把 next/link 支持的对象形式 href 转成字符串（用于原生 <a>）
+const hrefToString = h => {
+  if (typeof h === 'string') {
+    return h
+  }
+  if (h && typeof h === 'object') {
+    const query = h.query
+      ? '?' + new URLSearchParams(h.query).toString()
+      : ''
+    return `${h.pathname || ''}${query}${h.hash ? '#' + h.hash : ''}`
+  }
+  return ''
+}
+
+const SmartLink = ({ href, children, newTab, ...rest }) => {
   const LINK = siteConfig('LINK')
 
   // 获取 URL 字符串用于判断是否是外链
@@ -101,6 +115,28 @@ const SmartLink = ({ href, children, ...rest }) => {
         target='_blank'
         rel='noopener noreferrer'
         {...filterDOMProps(rest)}>
+        {children}
+      </a>
+    )
+  }
+
+  // 站内【文章】链接：由调用方显式传 newTab 标记，按 LINK_POST_NEW_TAB 配置在新窗口打开。
+  // 不用 URL 规则判断「是不是文章」：文章路由是 /[prefix]/[slug] 动态路由、
+  // 前缀由 Notion 侧配置决定，靠路径匹配会误伤 /about 这类自定义页面。
+  if (newTab && siteConfig('LINK_POST_NEW_TAB')) {
+    // 新窗口打开不能用 next/link：Link 会拦截点击做客户端路由，
+    // 与浏览器 target=_blank 的默认行为叠加会导致当前页也跟着跳转。
+    // 改用原生 <a>，行为确定为「只开新标签，当前页不动」。
+    return (
+      <a
+        href={
+          typeof href === 'string'
+            ? mergePreservedQueryForStringHref(href)
+            : hrefToString(href)
+        }
+        rel='noopener noreferrer'
+        {...filterDOMProps(rest)}
+        target={rest.target || '_blank'}>
         {children}
       </a>
     )

@@ -40,7 +40,7 @@ const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
         {/* 图片封面 */}
         {showPageCover && (
           <div className='md:w-5/12 overflow-hidden'>
-            <SmartLink href={post?.href}>
+            <SmartLink href={post?.href} newTab>
               <>
                 <LazyImage
                   priority={index === 1}

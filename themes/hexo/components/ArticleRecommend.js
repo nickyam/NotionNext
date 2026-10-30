@@ -39,6 +39,7 @@ export default function ArticleRecommend({ recommendPosts, siteInfo }) {
               key={post.id}
               title={post.title}
               href={post?.href}
+              newTab
               passHref
               className='flex h-40 cursor-pointer overflow-hidden rounded-lg'>
               <div className='relative isolate h-full w-full min-w-0 overflow-hidden rounded-lg group'>

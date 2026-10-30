@@ -15,6 +15,7 @@ export default function ArticleAdjacent ({ prev, next }) {
     <section className='pt-8 text-gray-800 items-center text-xs md:text-sm flex justify-between m-1 '>
       <SmartLink
         href={`/${prev.slug}`}
+        newTab
         passHref
         className='py-1  cursor-pointer hover:underline justify-start items-center dark:text-white flex w-full h-full duration-200'>
 
@@ -23,6 +24,7 @@ export default function ArticleAdjacent ({ prev, next }) {
       </SmartLink>
       <SmartLink
         href={`/${next.slug}`}
+        newTab
         passHref
         className='py-1 cursor-pointer hover:underline justify-end items-center dark:text-white flex w-full h-full duration-200'>
         {next.title}

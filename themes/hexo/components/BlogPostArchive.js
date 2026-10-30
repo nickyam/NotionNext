@@ -29,6 +29,7 @@ const BlogPostArchive = ({ posts = [], archiveTitle }) => {
                   &nbsp;
                   <SmartLink
                     href={post?.href}
+                    newTab
                     passHref
                     className='dark:text-gray-400  dark:hover:text-indigo-300 overflow-x-hidden hover:underline cursor-pointer text-gray-600'>
                     {post.title}
